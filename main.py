@@ -2,7 +2,28 @@ import cv2
 import pickle
 import numpy as np
 import cvzone
+import firebase
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+# Load the service account key file
+cred = credentials.Certificate("parkspace2-8c56a-firebase-adminsdk-az09q-8b4fb1494a.json")
 
+# Initialize the Firebase app
+firebase_admin.initialize_app(cred,
+                              {
+    'databaseURL':'https://parkspace2-8c56a-default-rtdb.firebaseio.com/'
+                              })
+
+
+# Get a reference to the root of the database
+ref = db.reference()
+
+# Set data at a specific location
+ref.child('users').child('user1').set({
+    'name': 'John Doe',
+    'email': 'johndoe@example.com'
+})
 #dimensions
 width, height= 107,48
 
@@ -12,7 +33,7 @@ cap=cv2.VideoCapture('carPark.mp4')
 with open('carParkpos', 'rb') as f:
     poslist = pickle.load(f)
 def checkparkingspace(imgPro):
-    availablespace = 0
+    availablespace=0
     availablespace_dict = {}
     for pos in poslist:
         x,y =pos
@@ -49,6 +70,16 @@ def checkparkingspace(imgPro):
             color=(0,0,255)
             thickness=2
 
+        ref.child('users').child('user1').set({
+            'name': 'John Doe',
+            'email': availablespace
+        })
+
+       # data={
+            #"availablespace":availablespace,
+           # "availablespace_dict":availablespace_dict
+        #}
+        #db.child("parking_data").set(data)
 
         #This creates the red or green rectangle according to vacancy of parking space
         cv2.rectangle(img, pos, (pos[0] + width, pos[1] + height), color,thickness)
@@ -74,8 +105,8 @@ while True:
 
 
 
-    if cap.get(cv2.CAP_PROP_POS_FRAMES)== cap.get(cv2.CAP_PROP_FRAME_COUNT):
-        cap.set(cv2.CAP_PROP_POS_FRAMES,0)
+    #if cap.get(cv2.CAP_PROP_POS_FRAMES)== cap.get(cv2.CAP_PROP_FRAME_COUNT):
+        #cap.set(cv2.CAP_PROP_POS_FRAMES,0)
 
     success, img = cap.read()
     imgGray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -98,4 +129,4 @@ while True:
     cv2.imshow("Image",img)
     #cv2.imshow("ImageBlur",imgBlur)
    #cv2.imshow("imgathresh",imgThreshold)
-    cv2.waitKey(30000)
+    cv2.waitKey(300)
