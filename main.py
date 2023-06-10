@@ -2,8 +2,9 @@ import cv2
 import pickle
 import numpy as np
 import cvzone
-import firebase
 import firebase_admin
+
+
 from firebase_admin import credentials
 from firebase_admin import db
 # Load the service account key file
@@ -19,11 +20,8 @@ firebase_admin.initialize_app(cred,
 # Get a reference to the root of the database
 ref = db.reference()
 
-# Set data at a specific location
-ref.child('users').child('user1').set({
-    'name': 'John Doe',
-    'email': 'johndoe@example.com'
-})
+
+
 #dimensions
 width, height= 107,48
 
@@ -40,6 +38,7 @@ def checkparkingspace(imgPro):
 
         imgcrop=imgPro[y:y+height,x:x+width]
         #cv2.imshow(str(x*y),imgcrop)
+
         count=cv2.countNonZero(imgcrop)
 
         # This converts coordinates to index
@@ -53,33 +52,16 @@ def checkparkingspace(imgPro):
             color=(0,255,0)
             thickness=5
             availablespace +=1
+            availablespace_dict[index] = pos
 
-            availablespace_dict[index]=pos
-
-
-            #this displays the index on the image
+          #this displays the index on the image
             cvzone.putTextRect(img, str(index), (x, y + height - 10), scale=2, offset=0, thickness=1)
-
-            #freespaces_index = {}
-            #freespaces_index[index] = pos[]
-
-
 
 
         else:
             color=(0,0,255)
             thickness=2
 
-        ref.child('users').child('user1').set({
-            'name': 'John Doe',
-            'email': availablespace
-        })
-
-       # data={
-            #"availablespace":availablespace,
-           # "availablespace_dict":availablespace_dict
-        #}
-        #db.child("parking_data").set(data)
 
         #This creates the red or green rectangle according to vacancy of parking space
         cv2.rectangle(img, pos, (pos[0] + width, pos[1] + height), color,thickness)
@@ -87,19 +69,37 @@ def checkparkingspace(imgPro):
         #This displays the id of the parking space defined
         #cvzone.putTextRect(img, str(index), (x, y + height - 10), scale=2, offset=0, thickness=1)
 
-
-        freespaces_index = {}
-
-        freespaces_index[index]=pos
-        #print(freespaces_index)
-
     #this gives the total number of parkings vs empty
     cvzone.putTextRect(img, f'Free:{availablespace}/{len(poslist)}', (100,50), scale=5, offset=0, thickness=3,colorR=(0,200,0))
 
-    #this displays the available spaces number and their coordinates
+    '''''''''#this displays the available spaces number and their coordinates
+    
     print("available spaces dict")
     print(availablespace_dict)
-    print(len(availablespace_dict))
+'''''
+    #this gives the keys of the availables space_dict which are the empty positions indexes
+    availableindexeslist=list(availablespace_dict.keys())
+
+    #print out of essential data
+    Total_vacancies=len(availablespace_dict)
+
+    print('Total vacant spots:',Total_vacancies )
+
+    print('List of empty positions', availableindexeslist)
+
+    essential_data_dict={
+        'available spot position':availableindexeslist,
+        'Total vacancies':Total_vacancies}
+    print(essential_data_dict)
+
+
+
+    ref.child('parking lots').child('Parking lot 1').set({
+        'Number of empty spaces': Total_vacancies,
+        'name': 'Wendani parking lot',
+        'available spot position':availableindexeslist
+
+    })
 
 while True:
 
@@ -118,15 +118,8 @@ while True:
     imgDilate=cv2.dilate(imgMedian,kernel,iterations=1)
 
     checkparkingspace(imgDilate)
-   # for pos in poslist:
-      #  cv2.rectangle(img, pos, (pos[0] + width, pos[1] + height), (255, 0, 255), 2)
-
-
-
-
-
 
     cv2.imshow("Image",img)
     #cv2.imshow("ImageBlur",imgBlur)
    #cv2.imshow("imgathresh",imgThreshold)
-    cv2.waitKey(300)
+    cv2.waitKey(3)
